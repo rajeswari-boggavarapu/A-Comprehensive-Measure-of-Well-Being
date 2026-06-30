@@ -1,68 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Human Development Index</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(circle at 30% 20%, #1b2a6b 0%, #0a0f2c 45%, #04061a 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(5, 8, 30, 0.75);
+    border: 1px solid rgba(120, 150, 255, 0.25);
+    border-radius: 18px;
+    padding: 36px 40px 44px;
+    box-shadow: 0 0 60px rgba(60, 90, 220, 0.25);
+    backdrop-filter: blur(4px);
+  }
+
+  h1 {
+    text-align: center;
+    color: #ff4d4d;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 32px;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 18px rgba(255, 60, 60, 0.5);
+  }
+
+  form { display: flex; flex-direction: column; gap: 16px; }
+
+  select, input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 22px;
+    border: 1px solid rgba(140, 170, 255, 0.4);
+    background: rgba(10, 15, 45, 0.6);
+    color: #d8e0ff;
+    font-size: 14px;
+    outline: none;
+    text-align: center;
+  }
+
+  select option { background: #0a0f2c; color: #d8e0ff; }
+
+  ::placeholder { color: #8d9bd1; }
+
+  button {
+    margin-top: 10px;
+    padding: 13px;
+    border: none;
+    border-radius: 22px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(90deg, #4facfe 0%, #b46cff 100%);
+    transition: opacity 0.2s ease;
+  }
+
+  button:hover { opacity: 0.88; }
+
+  .result-box {
+    margin-top: 26px;
+    text-align: center;
+    background: rgba(10, 15, 45, 0.55);
+    border: 1px solid rgba(140, 170, 255, 0.3);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  .result-tier {
+    color: #f4d35e;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #8fffb0;
+    font-style: italic;
+    font-size: 13px;
+    margin-top: -16px;
+    margin-bottom: 24px;
+  }
+</style>
+</head>
 <body>
+  <div class="card">
+    <h1>Human Development Index</h1>
+    <p class="subtitle">A machine learning web application using Flask</p>
 
-<center>
-    <div class="Header">
-        <font color="#FF0000" size="7">
-            Human Development
-        </font>
+    <form method="POST">
+      <select name="country" required>
+        <option value="" disabled selected>Select the name of the Country</option>
+        {% for c in countries %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+
+      <input type="number" step="0.1" name="life_expectancy" placeholder="Enter life expectancy rate (range 39-89)" required>
+      <input type="number" step="0.1" name="mean_schooling" placeholder="Enter Mean years of schooling (range 1-19)" required>
+      <input type="number" step="1" name="gni" placeholder="Enter GNI (range 740-178000)" required>
+      <input type="number" step="0.1" name="internet_users" placeholder="Enter the number of internet users (%)" required>
+
+      <button type="submit">Predict</button>
+    </form>
+
+    {% if result %}
+    <div class="result-box">
+      <div class="result-tier">{{ result }}{% if score is not none %} {{ score }}{% endif %}</div>
     </div>
-</center>
-
-<br><br><br><br><br>
-
-<form class="main" action="/predict" method="post">
-
-    <br>
-
-    <center>
-        <select id="Country" name="Country">
-            <option value="">Select the name of the Country</option>
-            <option value="0">Afganistan</option>
-            <option value="8">Australia</option>
-            <option value="13">Bangladesh</option>
-            <option value="31">Canada</option>
-            <option value="76">India</option>
-            <option value="138">Poland</option>
-            <option value="179">Turkey</option>
-        </select>
-    </center>
-
-    <input class="form-input"
-           type="text"
-           name="Life expectancy"
-           placeholder="Enter life expectancy rate(range 50-89)">
-
-    <input class="form-input"
-           type="text"
-           name="Mean years of schooling"
-           placeholder="Enter Mean years of schooling">
-
-    <input class="form-input"
-           type="text"
-           name="Gross national income (GNI) per capita"
-           placeholder="Enter GNI">
-
-    <input class="form-input"
-           type="text"
-           name="Internet users"
-           placeholder="Enter the number of internet users">
-
-    <br>
-
-    <center>
-        <input type="submit" class="logbtn" value="Predict">
-    </center>
-
-    <div class="bor">
-        <center>
-            <b>
-                <font color="white" size="5">
-                    {{showcase}}
-                </font>
-            </b>
-        </center>
-    </div>
-
-</form>
-
+    {% endif %}
+  </div>
 </body>
+</html>
