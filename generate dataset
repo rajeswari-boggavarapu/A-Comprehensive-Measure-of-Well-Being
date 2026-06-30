@@ -1,0 +1,105 @@
+import csv
+
+# country, life_expectancy, mean_schooling, gni_per_capita, internet_users_pct
+data = [
+    # ---- Very High HDI ----
+    ("Norway", 83.2, 13.0, 64660, 99.0),
+    ("Switzerland", 84.0, 13.9, 66600, 96.0),
+    ("Iceland", 82.7, 12.8, 55782, 99.0),
+    ("Germany", 81.0, 14.2, 54534, 91.0),
+    ("Australia", 83.3, 12.7, 49238, 90.0),
+    ("Sweden", 83.0, 12.6, 54508, 95.0),
+    ("Netherlands", 82.3, 12.6, 55979, 93.0),
+    ("Ireland", 82.0, 12.7, 76169, 92.0),
+    ("United States", 77.2, 13.7, 64765, 91.0),
+    ("Canada", 82.7, 13.4, 48527, 93.0),
+    ("United Kingdom", 81.3, 13.4, 45225, 95.0),
+    ("Japan", 84.8, 12.9, 42274, 90.0),
+    ("South Korea", 83.7, 12.5, 44501, 96.0),
+    ("France", 82.7, 11.6, 47173, 85.0),
+    ("Singapore", 83.7, 11.9, 90919, 92.0),
+
+    # ---- High HDI ----
+    ("China", 78.2, 8.1, 17504, 73.0),
+    ("Brazil", 75.5, 8.0, 14757, 81.0),
+    ("Russia", 72.7, 12.8, 27166, 88.0),
+    ("Mexico", 75.1, 9.2, 18867, 72.0),
+    ("Turkey", 76.0, 8.1, 28184, 79.0),
+    ("Malaysia", 76.0, 10.6, 27227, 90.0),
+    ("Thailand", 79.0, 8.7, 17781, 88.0),
+    ("Argentina", 75.4, 11.0, 22184, 87.0),
+    ("Iran", 74.6, 10.6, 14600, 78.0),
+    ("Colombia", 74.0, 8.6, 14792, 72.0),
+    ("Sri Lanka", 76.4, 10.8, 13315, 47.0),
+    ("Peru", 73.7, 9.3, 12791, 72.0),
+
+    # ---- Medium HDI ----
+    ("India", 67.7, 6.7, 6951, 46.0),
+    ("Indonesia", 67.6, 8.6, 12378, 64.0),
+    ("Philippines", 69.3, 9.4, 9540, 67.0),
+    ("Vietnam", 73.6, 8.4, 8137, 74.0),
+    ("Bangladesh", 72.4, 6.2, 5713, 39.0),
+    ("Egypt", 70.2, 7.4, 11879, 72.0),
+    ("Bolivia", 64.9, 9.0, 8330, 53.0),
+    ("Morocco", 74.0, 5.8, 7368, 84.0),
+    ("Kenya", 61.4, 6.6, 4844, 41.0),
+    ("Ghana", 64.1, 7.3, 5763, 58.0),
+    ("Guatemala", 68.1, 6.6, 8494, 51.0),
+    ("Laos", 68.2, 5.3, 7568, 56.0),
+    ("Nepal", 70.8, 5.1, 4022, 49.0),
+    ("Myanmar", 65.0, 5.0, 4961, 44.0),
+
+    # ---- Low HDI ----
+    ("Nigeria", 53.9, 6.7, 5086, 36.0),
+    ("Pakistan", 66.1, 4.5, 5005, 25.0),
+    ("Ethiopia", 65.7, 3.0, 2207, 25.0),
+    ("Haiti", 64.0, 5.6, 2920, 41.0),
+    ("Afghanistan", 62.0, 3.9, 1824, 18.0),
+    ("Yemen", 63.8, 3.2, 1314, 27.0),
+    ("Mozambique", 59.3, 3.5, 1242, 16.0),
+    ("South Sudan", 55.5, 5.5, 768, 8.0),
+    ("Chad", 52.5, 2.5, 1364, 13.0),
+    ("Niger", 61.6, 2.1, 1240, 7.0),
+    ("Central African Republic", 53.3, 4.3, 877, 12.0),
+    ("Burundi", 61.6, 3.3, 754, 11.0),
+]
+
+
+def normalize(value, low, high, log_scale=False):
+    import math
+    if log_scale:
+        value, low, high = math.log(value), math.log(low), math.log(high)
+    return max(0, min(1, (value - low) / (high - low)))
+
+
+def compute_hdi(life_exp, mean_school, gni, internet_pct):
+    health_idx = normalize(life_exp, 20, 85)
+    edu_idx = normalize(mean_school, 0, 15)
+    income_idx = normalize(gni, 100, 75000, log_scale=True)
+    tech_idx = normalize(internet_pct, 0, 100)
+    return (health_idx ** 0.3) * (edu_idx ** 0.3) * (income_idx ** 0.3) * (tech_idx ** 0.1)
+
+
+def classify_hdi(score):
+    if score >= 0.800:
+        return "Very High"
+    elif score >= 0.700:
+        return "High"
+    elif score >= 0.550:
+        return "Medium"
+    else:
+        return "Low"
+
+
+rows = []
+for country, life_exp, mean_school, gni, internet_pct in data:
+    score = compute_hdi(life_exp, mean_school, gni, internet_pct)
+    tier = classify_hdi(score)
+    rows.append([country, life_exp, mean_school, gni, internet_pct, round(score, 3), tier])
+
+with open("hdi_dataset.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(
+        ["country", "life_expectancy", "mean_schooling", "gni_per_capita", "internet_users", "hdi_score", "hdi_tier"]
+    )
+    writer.writerows(rows)
