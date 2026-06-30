@@ -1,73 +1,91 @@
+import os
 from flask import Flask, render_template, request
-import pandas as pd
 import numpy as np
-import pickle
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 
 app = Flask(__name__)
 
-# Load trained model
-model = pickle.load(open('HDI.pkl', 'rb'))
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
 
-@app.route('/')
-def home():
-    return render_template('home.html')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(BASE_DIR, "data", "hdi_dataset.csv")
 
-@app.route('/Home')
-def Home():
-    return render_template('home.html')
 
-@app.route('/Prediction')
-def Prediction():
-    return render_template('index.html')
-
-@app.route('/predict', methods=['POST'])
-def predict():
-
-    input_features = [float(x) for x in request.form.values()]
-    features_value = [np.array(input_features)]
-
-    features_name = [
-        'Country',
-        'Life expectancy',
-        'Mean years of schooling',
-        'Gross national income (GNI) per capita'
-    ]
-
-    df = pd.DataFrame(features_value, columns=features_name)
-
-    output = model.predict(df)
-
-    y_pred = round(output[0][0], 2)
-
-    if (y_pred >= 0.3 and y_pred <= 0.4):
-        return render_template(
-            "resultnew.html",
-            prediction_text='Low HDI ' + str(y_pred)
-        )
-
-    elif (y_pred >= 0.4 and y_pred <= 0.7):
-        return render_template(
-            "resultnew.html",
-            prediction_text='Medium HDI ' + str(y_pred)
-        )
-
-    elif (y_pred >= 0.7 and y_pred <= 0.8):
-        return render_template(
-            "resultnew.html",
-            prediction_text='High HDI ' + str(y_pred)
-        )
-
-    elif (y_pred >= 0.8 and y_pred <= 0.94):
-        return render_template(
-            "resultnew.html",
-            prediction_text='Very High HDI ' + str(y_pred)
-        )
-
+def classify_hdi(hdi_score):
+    if hdi_score >= 0.800:
+        return "Very High"
+    elif hdi_score >= 0.700:
+        return "High"
+    elif hdi_score >= 0.550:
+        return "Medium"
     else:
-        return render_template(
-            "resultnew.html",
-            prediction_text='The given values do not match the expected range.'
-        )
+        return "Low"
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+
+# ----------------------------------------------------------------------
+# Load dataset and train model at startup
+# ----------------------------------------------------------------------
+def load_dataset():
+    if not os.path.exists(DATASET_PATH):
+        raise FileNotFoundError(
+            f"Dataset not found at {DATASET_PATH}. "
+            "Run data/generate_dataset.py first, or place your own hdi_dataset.csv there "
+            "with columns: country, life_expectancy, mean_schooling, gni_per_capita, "
+            "internet_users, hdi_score, hdi_tier"
+        )
+    return pd.read_csv(DATASET_PATH)
+
+
+def train_model(df):
+    feature_cols = ["life_expectancy", "mean_schooling", "gni_per_capita", "internet_users"]
+    X = df[feature_cols]
+    y = df["hdi_score"]
+
+    model = RandomForestRegressor(n_estimators=300, random_state=RANDOM_SEED)
+    model.fit(X, y)
+    return model
+
+
+df = load_dataset()
+model = train_model(df)
+COUNTRIES = sorted(df["country"].unique().tolist())
+
+
+# ----------------------------------------------------------------------
+# Routes
+# ----------------------------------------------------------------------
+@app.route("/", methods=["GET", "POST"])
+def index():
+    result = None
+    score = None
+
+    if request.method == "POST":
+        try:
+            life_exp = float(request.form.get("life_expectancy"))
+            mean_school = float(request.form.get("mean_schooling"))
+            gni = float(request.form.get("gni"))
+            internet_pct = float(request.form.get("internet_users"))
+
+            features = pd.DataFrame(
+                [[life_exp, mean_school, gni, internet_pct]],
+                columns=["life_expectancy", "mean_schooling", "gni_per_capita", "internet_users"],
+            )
+            predicted_score = model.predict(features)[0]
+            predicted_tier = classify_hdi(predicted_score)
+
+            result = f"{predicted_tier} HDI"
+            score = round(predicted_score, 2)
+        except (TypeError, ValueError):
+            result = "Please fill in all fields with valid numbers."
+            score = None
+
+    return render_template("index.html", countries=COUNTRIES, result=result, score=score)
+
+
+if __name__ == "__main__":
+    print(f"Loaded {len(df)} countries from dataset.")
+    app.run(debug=True)
+
+
