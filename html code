@@ -1,0 +1,68 @@
+<body>
+
+<center>
+    <div class="Header">
+        <font color="#FF0000" size="7">
+            Human Development
+        </font>
+    </div>
+</center>
+
+<br><br><br><br><br>
+
+<form class="main" action="/predict" method="post">
+
+    <br>
+
+    <center>
+        <select id="Country" name="Country">
+            <option value="">Select the name of the Country</option>
+            <option value="0">Afganistan</option>
+            <option value="8">Australia</option>
+            <option value="13">Bangladesh</option>
+            <option value="31">Canada</option>
+            <option value="76">India</option>
+            <option value="138">Poland</option>
+            <option value="179">Turkey</option>
+        </select>
+    </center>
+
+    <input class="form-input"
+           type="text"
+           name="Life expectancy"
+           placeholder="Enter life expectancy rate(range 50-89)">
+
+    <input class="form-input"
+           type="text"
+           name="Mean years of schooling"
+           placeholder="Enter Mean years of schooling">
+
+    <input class="form-input"
+           type="text"
+           name="Gross national income (GNI) per capita"
+           placeholder="Enter GNI">
+
+    <input class="form-input"
+           type="text"
+           name="Internet users"
+           placeholder="Enter the number of internet users">
+
+    <br>
+
+    <center>
+        <input type="submit" class="logbtn" value="Predict">
+    </center>
+
+    <div class="bor">
+        <center>
+            <b>
+                <font color="white" size="5">
+                    {{showcase}}
+                </font>
+            </b>
+        </center>
+    </div>
+
+</form>
+
+</body>
